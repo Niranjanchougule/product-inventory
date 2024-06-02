@@ -16,13 +16,12 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
-  Select,
+  Tabs,
   Tab,
   TabList,
   TabPanel,
   TabPanels,
   Table,
-  Tabs,
   Tag,
   Tbody,
   Td,
@@ -33,7 +32,7 @@ import {
   useDisclosure,
   useToast,
 } from "@chakra-ui/react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
@@ -42,6 +41,27 @@ import { MultiSelect } from "chakra-multiselect";
 // Fetch products from the API
 const fetchProducts = async () => {
   const { data } = await axios.get("http://localhost:3000/products");
+  return data;
+};
+
+// Fetch sale orders from the API
+const fetchSaleOrders = async () => {
+  const { data } = await axios.get("http://localhost:3000/sale-orders");
+  return data;
+};
+
+// Save sale order to the API
+const saveSaleOrder = async (saleOrder) => {
+  const { data } = await axios.post(
+    "http://localhost:3000/sale-orders",
+    saleOrder
+  );
+  return data;
+};
+
+// Fetch sale order by ID from the API
+const fetchSaleOrderById = async (id) => {
+  const { data } = await axios.get(`http://localhost:3000/sale-orders/${id}`);
   return data;
 };
 
@@ -78,29 +98,97 @@ const SaleOrderForm = ({ isOpen, onClose, saleOrderId }) => {
     name: "items",
   });
 
+  const mutation = useMutation({
+    mutationFn: saveSaleOrder,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["saleOrders"]);
+      toast({
+        title: "Sale Order Created.",
+        description: "Your sale order has been created successfully.",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
+      reset();
+      onClose();
+    },
+    onError: (error) => {
+      toast({
+        title: "An error occurred.",
+        description: error.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    },
+  });
+
   const onSubmit = (data) => {
     const hasErrors = validateForm(data);
     if (hasErrors) return;
-
-    console.log(data);
-    // Handle form submission
-
-    toast({
-      title: "Sale Order Created.",
-      description: "Your sale order has been created successfully.",
-      status: "success",
-      duration: 5000,
-      isClosable: true,
-    });
-    onClose();
+    const items = data.items.map((item) => ({
+      sku_id: item.sku_id,
+      price: item.price,
+      quantity: parseInt(item.quantity),
+      product_id: parseInt(item.product_id),
+    }));
+    const saleOrder = {
+      customer_id: data.customer_id,
+      invoice_no: data.invoice_no,
+      invoice_date: data.invoice_date,
+      items,
+      paid: false,
+    };
+    saleOrder.adding_date = new Date().toISOString();
+    saleOrder.updated_on = new Date().toISOString();
+    mutation.mutate(saleOrder);
   };
 
   useEffect(() => {
-    if (saleOrderId) {
-      // Fetch the existing sale order details and set the form values
-      // reset(formDataFromAPI);
+    if (saleOrderId && products) {
+      fetchSaleOrderById(saleOrderId).then((data) => {
+        const productIds = [];
+        const items = data.items.map((item) => {
+          const product = products.find((p) => p.id === item.product_id);
+          const sku = product?.sku.find((s) => s.id === item.sku_id);
+          if (!productIds.includes(item.product_id)) {
+            productIds.push(item.product_id);
+          }
+          return {
+            ...item,
+            quantity_in_inventory: sku?.quantity_in_inventory,
+            amount: sku?.amount,
+            unit: sku?.unit,
+            max_retail_price: sku?.max_retail_price,
+          };
+        });
+        let selectedProducts = products.filter((p) =>
+          productIds.includes(p.id)
+        );
+        selectedProducts = selectedProducts.map((p) => ({
+          label: p.name,
+          value: p.name,
+          sku: p.sku,
+        }));
+
+        setSelectedProducts(selectedProducts);
+
+        reset({
+          customer_id: data.customer_id,
+          invoice_no: data.invoice_no,
+          invoice_date: data.invoice_date,
+          items,
+        });
+      });
+    } else {
+      reset({
+        customer_id: "",
+        invoice_no: "",
+        invoice_date: "",
+        items: [],
+      });
     }
-  }, [saleOrderId, reset]);
+  }, [saleOrderId, products, reset]);
 
   const validateForm = (data) => {
     let hasErrors = false;
@@ -167,6 +255,7 @@ const SaleOrderForm = ({ isOpen, onClose, saleOrderId }) => {
   };
 
   const handleProductSelect = (selectedProducts) => {
+    console.log(selectedProducts);
     setSelectedProducts(selectedProducts);
     const skus = selectedProducts.flatMap((product) =>
       product.sku.map((sku) => ({
@@ -177,6 +266,7 @@ const SaleOrderForm = ({ isOpen, onClose, saleOrderId }) => {
         amount: `${sku.amount} ${sku.unit}`,
         unit: sku.unit,
         max_retail_price: sku.max_retail_price,
+        product_id: product.id,
       }))
     );
     reset({ ...watch(), items: skus });
@@ -189,6 +279,7 @@ const SaleOrderForm = ({ isOpen, onClose, saleOrderId }) => {
     value: product.name,
     sku: product.sku,
   }));
+
   return (
     <Modal
       initialFocusRef={initialRef}
@@ -198,7 +289,9 @@ const SaleOrderForm = ({ isOpen, onClose, saleOrderId }) => {
     >
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Create Sale Order</ModalHeader>
+        <ModalHeader>
+          {saleOrderId ? "Edit Sale Order" : "Create Sale Order"}
+        </ModalHeader>
         <ModalCloseButton />
         <ModalBody pb={6}>
           <form onSubmit={handleSubmit(onSubmit)}>
@@ -344,17 +437,40 @@ const SaleOrderForm = ({ isOpen, onClose, saleOrderId }) => {
 
 const Home = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const { data: saleOrders, isLoading } = useQuery({
+    queryKey: ["saleOrders"],
+    queryFn: fetchSaleOrders,
+  });
+  const [editSaleOrderId, setEditSaleOrderId] = useState(null);
+
+  if (isLoading) return <p>Loading...</p>;
+
+  const handleEdit = (saleOrderId) => {
+    setEditSaleOrderId(saleOrderId);
+    onOpen();
+  };
+
+  const activeSaleOrders = saleOrders.filter((order) => !order.paid);
+  const completedSaleOrders = saleOrders.filter((order) => order.paid);
 
   return (
     <Box p={4}>
-      <Heading as="h1" mb={6}>
-        Sales Orders
-      </Heading>
       <Tabs>
         <TabList>
           <Tab>Active Sale Orders</Tab>
           <Tab>Completed Sale Orders</Tab>
-          <Button onClick={onOpen}>Create Sale Order</Button>
+          <Button
+            style={{
+              position: "absolute",
+              right: "0px",
+            }}
+            onClick={() => {
+              setEditSaleOrderId(null);
+              onOpen();
+            }}
+          >
+            Create Sale Order
+          </Button>
         </TabList>
 
         <TabPanels>
@@ -363,34 +479,35 @@ const Home = () => {
               <Thead>
                 <Tr>
                   <Th>ID</Th>
-                  <Th>Customer Name</Th>
-                  <Th>Price</Th>
+                  <Th>Customer Id</Th>
+                  <Th>Invoice Date</Th>
                   <Th>Last Modified</Th>
                   <Th>Actions</Th>
                 </Tr>
               </Thead>
               <Tbody>
-                {/* Sample data for illustration */}
-                <Tr>
-                  <Td>1</Td>
-                  <Td>John Doe</Td>
-                  <Td>$100.00</Td>
-                  <Td>2024-05-27</Td>
-                  <Td>
-                    <IconButton
-                      aria-label="Edit"
-                      icon={<EditIcon />}
-                      size="sm"
-                      mr={2}
-                    />
-                    <IconButton
-                      aria-label="View"
-                      icon={<ViewIcon />}
-                      size="sm"
-                    />
-                  </Td>
-                </Tr>
-                {/* Add more rows as needed */}
+                {activeSaleOrders.map((order) => (
+                  <Tr key={order.id}>
+                    <Td>{order.id}</Td>
+                    <Td>{order.customer_id}</Td>
+                    <Td>{order.invoice_date}</Td>
+                    <Td>{order.updated_on}</Td>
+                    <Td>
+                      <IconButton
+                        aria-label="Edit"
+                        icon={<EditIcon />}
+                        size="sm"
+                        mr={2}
+                        onClick={() => handleEdit(order.id)}
+                      />
+                      <IconButton
+                        aria-label="View"
+                        icon={<ViewIcon />}
+                        size="sm"
+                      />
+                    </Td>
+                  </Tr>
+                ))}
               </Tbody>
             </Table>
           </TabPanel>
@@ -399,40 +516,38 @@ const Home = () => {
               <Thead>
                 <Tr>
                   <Th>ID</Th>
-                  <Th>Customer Name</Th>
-                  <Th>Price</Th>
+                  <Th>Customer Id</Th>
+                  <Th>Invoice Date</Th>
                   <Th>Last Modified</Th>
                   <Th>Actions</Th>
                 </Tr>
               </Thead>
               <Tbody>
-                {/* Sample data for illustration */}
-                <Tr>
-                  <Td>2</Td>
-                  <Td>Jane Smith</Td>
-                  <Td>$150.00</Td>
-                  <Td>2024-05-26</Td>
-                  <Td>
-                    <IconButton
-                      aria-label="Edit"
-                      icon={<EditIcon />}
-                      size="sm"
-                      mr={2}
-                    />
-                    <IconButton
-                      aria-label="View"
-                      icon={<ViewIcon />}
-                      size="sm"
-                    />
-                  </Td>
-                </Tr>
-                {/* Add more rows as needed */}
+                {completedSaleOrders.map((order) => (
+                  <Tr key={order.id}>
+                    <Td>{order.id}</Td>
+                    <Td>{order.customer_id}</Td>
+                    <Td>{order.invoice_date}</Td>
+                    <Td>{order.updated_on}</Td>
+                    <Td>
+                      <IconButton
+                        aria-label="View"
+                        icon={<ViewIcon />}
+                        size="sm"
+                      />
+                    </Td>
+                  </Tr>
+                ))}
               </Tbody>
             </Table>
           </TabPanel>
         </TabPanels>
       </Tabs>
-      <SaleOrderForm isOpen={isOpen} onClose={onClose} />
+      <SaleOrderForm
+        isOpen={isOpen}
+        onClose={onClose}
+        saleOrderId={editSaleOrderId}
+      />
     </Box>
   );
 };

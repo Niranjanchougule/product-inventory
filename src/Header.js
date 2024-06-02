@@ -1,4 +1,4 @@
-import { Button } from "@chakra-ui/react";
+import { Button, Heading } from "@chakra-ui/react";
 import { useColorMode } from "@chakra-ui/react";
 import "./Header.css";
 
@@ -7,7 +7,7 @@ function Header() {
   return (
     <div className="header-containar">
       <div></div>
-      <h3>Product Inventory</h3>
+      <Heading as={"h2"}>Product Inevntory</Heading>
       <div>
         <Button colorScheme="blue" size="sm" onClick={toggleColorMode}>
           Toggle {colorMode === "light" ? "Dark" : "Light"}
