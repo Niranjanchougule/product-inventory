@@ -1,0 +1,202 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "email": "admin@gmail.com",
+      "username": "akshay",
+      "lastname": "patil",
+      "jobrole": "owner",
+      "password": "admin123",
+      "verified": true
+    },
+    {
+      "id": 2,
+      "email": "rakesh@gmail.com",
+      "username": "rakesh",
+      "lastname": "kumbhar",
+      "jobrole": "superviser",
+      "password": "rakesh123",
+      "verified": false
+    },
+    {
+      "id": 3,
+      "email": "swapnil@gmail.com",
+      "username": "swapnil",
+      "lastname": "shinde",
+      "jobrole": "operator",
+      "password": "swapnil123",
+      "verified": true
+    },
+    {
+      "username": "rohit",
+      "lastname": "patil",
+      "address": "narla",
+      "email": "rohit@gmail.com",
+      "jobrole": "superviser",
+      "DOB": "2000-12-21",
+      "gender": "male",
+      "verified": true,
+      "password": "rohit123",
+      "id": 4
+    },
+    {
+      "username": "satish",
+      "lastname": "patil",
+      "address": "nerla",
+      "email": "akshay@gmail.com",
+      "jobrole": "superviser",
+      "DOB": "1998-03-12",
+      "gender": "male",
+      "verified": false,
+      "password": "satish123",
+      "id": 5
+    },
+    {
+      "username": "ram",
+      "lastname": "sharma",
+      "address": "pune",
+      "email": "ram@gmail.com",
+      "jobrole": "superviser",
+      "DOB": "1997-12-01",
+      "gender": "male",
+      "verified": true,
+      "password": "az123",
+      "id": 6
+    },
+    {
+      "username": "ramesh",
+      "lastname": "sutar",
+      "address": "kolhapur",
+      "email": "ramesh@gmail.com",
+      "jobrole": "operator",
+      "DOB": "1956-03-12",
+      "gender": "male",
+      "verified": true,
+      "password": "ramesh123",
+      "id": 7
+    },
+    {
+      "username": "lakhan",
+      "lastname": "sharma",
+      "address": "mumbai",
+      "email": "lakhan@gmail.com",
+      "jobrole": "operator",
+      "DOB": "1987-02-12",
+      "gender": "male",
+      "verified": true,
+      "password": "lakhan123",
+      "id": 8
+    },
+    {
+      "username": "niranjan",
+      "lastname": "chougule",
+      "address": "malkapur",
+      "email": "niranjan@gmail.com",
+      "jobrole": "superviser",
+      "DOB": "1996-03-12",
+      "gender": "male",
+      "verified": true,
+      "password": "niranjan123",
+      "id": 9
+    }
+  ],
+  "products": [
+    {
+      "id": 301,
+      "display_id": 10,
+      "owner": 1080,
+      "name": "Smartphone X200",
+      "category": "Electronics",
+      "characteristics": "128GB, 6GB RAM, Dual Camera",
+      "features": "Face Recognition, Fast Charging",
+      "brand": "TechCorp",
+      "sku": [
+        {
+          "id": 301,
+          "selling_price": 699,
+          "max_retail_price": 749,
+          "amount": 1,
+          "unit": "unit",
+          "quantity_in_inventory": 150,
+          "product": 301
+        },
+        {
+          "id": 302,
+          "selling_price": 799,
+          "max_retail_price": 849,
+          "amount": 1,
+          "unit": "unit",
+          "quantity_in_inventory": 80,
+          "product": 301
+        }
+      ],
+      "updated_on": "2024-06-01T10:30:00Z",
+      "adding_date": "2024-01-15T09:00:00Z"
+    },
+    {
+      "id": 302,
+      "display_id": 11,
+      "owner": 1080,
+      "name": "Sports Running Shoes",
+      "category": "Footwear",
+      "characteristics": "Size 10, Blue Color, Lightweight",
+      "features": "Breathable Material, Non-Slip Sole",
+      "brand": "RunFast",
+      "sku": [
+        {
+          "id": 303,
+          "selling_price": 120,
+          "max_retail_price": 150,
+          "amount": 1,
+          "unit": "pair",
+          "quantity_in_inventory": 200,
+          "product": 302
+        },
+        {
+          "id": 304,
+          "selling_price": 130,
+          "max_retail_price": 160,
+          "amount": 1,
+          "unit": "pair",
+          "quantity_in_inventory": 100,
+          "product": 302
+        }
+      ],
+      "updated_on": "2024-06-01T10:30:00Z",
+      "adding_date": "2024-02-20T11:00:00Z"
+    },
+    {
+      "id": 303,
+      "display_id": 12,
+      "owner": 1081,
+      "name": "Organic Almonds",
+      "category": "Groceries",
+      "characteristics": "500g Pack, Raw, Unsalted",
+      "features": "High in Protein, Gluten-Free",
+      "brand": "NutriDelight",
+      "sku": [
+        {
+          "id": 305,
+          "selling_price": 15,
+          "max_retail_price": 18,
+          "amount": 900,
+          "unit": "g",
+          "quantity_in_inventory": 500,
+          "product": 303
+        },
+        {
+          "id": 306,
+          "selling_price": 28,
+          "max_retail_price": 32,
+          "amount": 10,
+          "unit": "kg",
+          "quantity_in_inventory": 250,
+          "product": 303
+        }
+      ],
+      "updated_on": "2024-06-01T10:30:00Z",
+      "adding_date": "2024-03-10T12:00:00Z"
+    }
+  ],
+  "sale-orders": []
+}
