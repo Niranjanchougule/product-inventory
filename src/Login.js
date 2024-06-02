@@ -9,22 +9,65 @@ import {
   Heading,
   useToast,
 } from "@chakra-ui/react";
+import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router";
+
+const fetchUser = async ({ queryKey }) => {
+  const [_, username, password] = queryKey;
+  const response = await fetch(
+    `http://localhost:3000/users?email=${username}&password=${password}`
+  );
+  if (!response.ok) {
+    throw new Error("Network response was not ok");
+  }
+  return response.json();
+};
 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const toast = useToast();
+  const navigate = useNavigate();
+  const { data: users, refetch } = useQuery({
+    queryKey: ["user", username, password],
+    queryFn: fetchUser,
+    enabled: false, // Disable automatic query
+  });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Perform login logic here
-    toast({
-      title: "Logged in",
-      description: "You've successfully logged in.",
-      status: "success",
-      duration: 9000,
-      isClosable: true,
-    });
+    try {
+      const result = await refetch();
+      if (result.data.length > 0) {
+        const token = btoa(`${username}:${password}`);
+        localStorage.setItem("token", token);
+        toast({
+          title: "Logged in",
+          description: "You've successfully logged in.",
+          status: "success",
+          duration: 9000,
+          isClosable: true,
+        });
+        navigate(`/home`);
+      } else {
+        toast({
+          title: "Login failed",
+          description: "Invalid username or password.",
+          status: "error",
+          duration: 9000,
+          isClosable: true,
+        });
+      }
+    } catch (error) {
+      console.error("Error logging in:", error);
+      toast({
+        title: "An error occurred",
+        description: "Unable to log in. Please try again later.",
+        status: "error",
+        duration: 9000,
+        isClosable: true,
+      });
+    }
   };
 
   return (
@@ -43,7 +86,7 @@ const Login = () => {
       </Heading>
       <form onSubmit={handleSubmit}>
         <VStack spacing={4}>
-          <FormControl id="email" isRequired>
+          <FormControl id="username" isRequired>
             <FormLabel>Username</FormLabel>
             <Input
               type="text"
