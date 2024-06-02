@@ -99,6 +99,53 @@ const SaleOrderForm = ({ isOpen, onClose, saleOrderId }) => {
     name: "items",
   });
 
+  useEffect(() => {
+    if (saleOrderId && products) {
+      fetchSaleOrderById(saleOrderId).then((data) => {
+        const productIds = [];
+        const items = data.items.map((item) => {
+          const product = products.find((p) => p.id === item.product_id);
+          const sku = product?.sku.find((s) => s.id === item.sku_id);
+          if (!productIds.includes(item.product_id)) {
+            productIds.push(item.product_id);
+          }
+          return {
+            ...item,
+            quantity_in_inventory: sku?.quantity_in_inventory,
+            amount: sku?.amount,
+            unit: sku?.unit,
+            max_retail_price: sku?.max_retail_price,
+          };
+        });
+        let selectedProducts = products.filter((p) =>
+          productIds.includes(p.id)
+        );
+        selectedProducts = selectedProducts.map((p) => ({
+          label: p.name,
+          value: p.name,
+          id: p.id,
+          sku: p.sku,
+        }));
+
+        setSelectedProducts(selectedProducts);
+
+        reset({
+          customer_id: data.customer_id,
+          invoice_no: data.invoice_no,
+          invoice_date: data.invoice_date,
+          items,
+        });
+      });
+    } else {
+      reset({
+        customer_id: "",
+        invoice_no: "",
+        invoice_date: "",
+        items: [],
+      });
+    }
+  }, [saleOrderId, products, reset]);
+
   const mutation = useMutation({
     mutationFn: saveSaleOrder,
     onSuccess: () => {
@@ -127,6 +174,7 @@ const SaleOrderForm = ({ isOpen, onClose, saleOrderId }) => {
   const onSubmit = (data) => {
     const hasErrors = validateForm(data);
     if (hasErrors) return;
+    console.log(data.items);
     const items = data.items.map((item) => ({
       sku_id: item.sku_id,
       price: item.price,
@@ -140,56 +188,11 @@ const SaleOrderForm = ({ isOpen, onClose, saleOrderId }) => {
       items,
       paid: false,
     };
+
     saleOrder.adding_date = new Date().toISOString();
     saleOrder.updated_on = new Date().toISOString();
     mutation.mutate(saleOrder);
   };
-
-  useEffect(() => {
-    if (saleOrderId && products) {
-      fetchSaleOrderById(saleOrderId).then((data) => {
-        const productIds = [];
-        const items = data.items.map((item) => {
-          const product = products.find((p) => p.id === item.product_id);
-          const sku = product?.sku.find((s) => s.id === item.sku_id);
-          if (!productIds.includes(item.product_id)) {
-            productIds.push(item.product_id);
-          }
-          return {
-            ...item,
-            quantity_in_inventory: sku?.quantity_in_inventory,
-            amount: sku?.amount,
-            unit: sku?.unit,
-            max_retail_price: sku?.max_retail_price,
-          };
-        });
-        let selectedProducts = products.filter((p) =>
-          productIds.includes(p.id)
-        );
-        selectedProducts = selectedProducts.map((p) => ({
-          label: p.name,
-          value: p.name,
-          sku: p.sku,
-        }));
-
-        setSelectedProducts(selectedProducts);
-
-        reset({
-          customer_id: data.customer_id,
-          invoice_no: data.invoice_no,
-          invoice_date: data.invoice_date,
-          items,
-        });
-      });
-    } else {
-      reset({
-        customer_id: "",
-        invoice_no: "",
-        invoice_date: "",
-        items: [],
-      });
-    }
-  }, [saleOrderId, products, reset]);
 
   const validateForm = (data) => {
     let hasErrors = false;
@@ -277,6 +280,7 @@ const SaleOrderForm = ({ isOpen, onClose, saleOrderId }) => {
   const options = products?.map((product) => ({
     label: product.name,
     value: product.name,
+    id: product.id,
     sku: product.sku,
   }));
 
