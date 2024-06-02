@@ -37,6 +37,7 @@ import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { MultiSelect } from "chakra-multiselect";
+import SaleOrderDetailsModal from "./SaleOrderDetailsModel";
 
 // Fetch products from the API
 const fetchProducts = async () => {
@@ -255,7 +256,6 @@ const SaleOrderForm = ({ isOpen, onClose, saleOrderId }) => {
   };
 
   const handleProductSelect = (selectedProducts) => {
-    console.log(selectedProducts);
     setSelectedProducts(selectedProducts);
     const skus = selectedProducts.flatMap((product) =>
       product.sku.map((sku) => ({
@@ -437,18 +437,30 @@ const SaleOrderForm = ({ isOpen, onClose, saleOrderId }) => {
 
 const Home = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const {
+    isOpen: isDetailsOpen,
+    onOpen: onDetailsOpen,
+    onClose: onDetailsClose,
+  } = useDisclosure();
   const { data: saleOrders, isLoading } = useQuery({
     queryKey: ["saleOrders"],
     queryFn: fetchSaleOrders,
   });
+
+  const [selectedSaleOrderId, setSelectedSaleOrderId] = useState(null);
   const [editSaleOrderId, setEditSaleOrderId] = useState(null);
 
-  if (isLoading) return <p>Loading...</p>;
+  const handleViewDetails = (id) => {
+    setSelectedSaleOrderId(id);
+    onDetailsOpen();
+  };
 
-  const handleEdit = (saleOrderId) => {
-    setEditSaleOrderId(saleOrderId);
+  const handleEditOrder = (id) => {
+    setEditSaleOrderId(id);
     onOpen();
   };
+
+  if (isLoading) return <p>Loading...</p>;
 
   const activeSaleOrders = saleOrders.filter((order) => !order.paid);
   const completedSaleOrders = saleOrders.filter((order) => order.paid);
@@ -498,12 +510,13 @@ const Home = () => {
                         icon={<EditIcon />}
                         size="sm"
                         mr={2}
-                        onClick={() => handleEdit(order.id)}
+                        onClick={() => handleEditOrder(order.id)}
                       />
                       <IconButton
                         aria-label="View"
                         icon={<ViewIcon />}
                         size="sm"
+                        onClick={() => handleViewDetails(order.id)}
                       />
                     </Td>
                   </Tr>
@@ -534,6 +547,7 @@ const Home = () => {
                         aria-label="View"
                         icon={<ViewIcon />}
                         size="sm"
+                        onClick={() => handleViewDetails(order.id)}
                       />
                     </Td>
                   </Tr>
@@ -547,6 +561,11 @@ const Home = () => {
         isOpen={isOpen}
         onClose={onClose}
         saleOrderId={editSaleOrderId}
+      />
+      <SaleOrderDetailsModal
+        isOpen={isDetailsOpen}
+        onClose={onDetailsClose}
+        saleOrderId={selectedSaleOrderId}
       />
     </Box>
   );
